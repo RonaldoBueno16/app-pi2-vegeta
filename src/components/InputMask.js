@@ -1,11 +1,19 @@
 import React from "react";
 import { SafeAreaView, StyleSheet, Text, TextInput, Dimensions } from "react-native";
+import { TextInputMask } from "react-native-masked-text";
 
-export default function Input(prop) {
+export default function InputMask(prop) {
     return (
         <SafeAreaView>
             <Text style={estilo.label}>{prop.label}</Text>
-            <TextInput value={prop.value}  style={estilo.input} onChangeText={prop.onChangeText} placeholder={prop.placeholder} secureTextEntry={prop.protected == undefined ? (false) : true} />
+            <TextInputMask style={estilo.input}
+                type={prop.type}
+                options={prop.options}
+                value={prop.value}
+                onChangeText={prop.onChangeText}
+                placeholder={prop.placeholder}
+                
+            />
             
         </SafeAreaView>
     )

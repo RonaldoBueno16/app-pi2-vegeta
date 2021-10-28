@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text } from "react-native";
 
 import Input from "../../components/Input";
@@ -6,18 +6,19 @@ import Input from "../../components/Input";
 import logo from '../../images/logo.png'
 
 export default function SignIn({navigation}) {    
-    console.log("Exibindo SignIn");
-    
+    const [nome, setName]= useState("");
+    const [password, setPassword]= useState("");
+
     return (
         <SafeAreaView style={estilo.container}>
             <SafeAreaView>
                 <Image source={logo}/>
             </SafeAreaView>
 
-            <Input label="Usuário" placeholder="Digite o seu usuário" />
-            <Input label="Senha" placeholder="Digite a sua senha" protected />
+            <Input label="Usuário" value={nome} onChangeText={(text) => { setName(text) }} placeholder="Digite o seu usuário" />
+            <Input label="Senha" value={password} onChangeText={(text) => { setPassword(text) }} placeholder="Digite a sua senha" protected />
             
-            <TouchableOpacity style={estilo.button}>
+            <TouchableOpacity style={estilo.button} onPress={() => {}}>
                 <Text style={estilo.labelbutton}>Conectar</Text>
             </TouchableOpacity>
 
