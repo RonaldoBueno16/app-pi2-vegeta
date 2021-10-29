@@ -1,6 +1,8 @@
-import React, {useState} from "react";
-import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text, Alert } from "react-native";
+import React, {useState, useEffect} from "react";
+import { CommonActions } from "@react-navigation/native";
+import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text, Alert, AsyncStorage } from "react-native";
 import Spinner from 'react-native-loading-spinner-overlay';
+
 
 import showAlert from "../../components/Alert";
 import Input from "../../components/Input";
@@ -13,6 +15,18 @@ export default function SignIn({route, navigation}) {
     let [nome, setName]= useState("");
     const [password, setPassword]= useState("");
     const [loading, setLoading] = useState(false);
+    const [userId, setId] = useState(-1);
+    const [didMount, setDidMount] = useState(false); 
+
+    useEffect(() => {
+        setDidMount(true);
+        return () => setDidMount(false);
+    }, [])
+
+    if(!didMount) {
+        return null;
+    }
+    
     const startLoading = () => {
         setLoading(true);
     };
@@ -20,12 +34,13 @@ export default function SignIn({route, navigation}) {
         setLoading(false);
     }
 
+    console.log("Id do usuário: ", userId);
+
     if(route.params != undefined) {
         const { user_name } = route.params;
         route.params = undefined;
         setName(user_name);
     }
-    
     
     return (
         <SafeAreaView style={estilo.container}>
@@ -50,13 +65,23 @@ export default function SignIn({route, navigation}) {
 
                 const login = AuthUser(nome, password);
                 login.then((data) => {
-                    
-                    
-                    
                     if(data.data != undefined) {
                         if(data.data.length == 1) {
                             if(data.data[0].user_id) {
-                                showAlert("Conectou", "Conta autenticada com sucesso!");
+                                showAlert("Conectou", "Conta autenticada com sucesso!" + data.data[0].user_ids);
+                                setId(data.data[0].user_id);
+
+                                navigation.dispatch(
+                                    CommonActions.reset({
+                                        index: 0,
+                                        routes: [
+                                            {
+                                                name: 'main',
+                                                params: { user_id: userId }
+                                            }
+                                        ]
+                                    })
+                                )
                             }
                             else {
                                 showAlert("Falha", "Não foi encontrado nenhuma conta com as credenciais informadas");
