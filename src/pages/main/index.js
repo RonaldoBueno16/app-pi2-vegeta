@@ -1,6 +1,5 @@
 import React from "react";
 import { Text, SafeAreaView, StyleSheet, StatusBar, Image, Dimensions } from "react-native";
-import { useIsFocused } from '@react-navigation/native';
 
 import logo from '../../images/logo.png'
 
