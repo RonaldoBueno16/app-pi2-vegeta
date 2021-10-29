@@ -5,7 +5,7 @@ export default function Input(prop) {
     return (
         <SafeAreaView>
             <Text style={estilo.label}>{prop.label}</Text>
-            <TextInput value={prop.value}  style={estilo.input} onChangeText={prop.onChangeText} placeholder={prop.placeholder} secureTextEntry={prop.protected == undefined ? (false) : true} />
+            <TextInput value={prop.value} autoCapitalize={prop.autoCapitalize} autoCorrect={prop.autoCorrect == undefined ? (false) : (prop.autoCorrect)} style={estilo.input} onChangeText={prop.onChangeText} placeholder={prop.placeholder} secureTextEntry={prop.protected == undefined ? (false) : true} />
             
         </SafeAreaView>
     )

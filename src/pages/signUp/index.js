@@ -4,8 +4,9 @@ import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text, Scroll
 import showAlert from "../../components/Alert";
 import Input from "../../components/Input";
 import InputMask from "../../components/InputMask";
-import Select from "../../components/Select";
+
 import { SubscriptionNewUser } from "./signUpAPI";
+import { RemoveInappropriate } from "../funcs/filecorrector";
 
 import logo from '../../images/logo.png'
 
@@ -16,7 +17,6 @@ export default function SignUp({navigation}) {
     const [nome, setNome] = useState("");
     const [sobrenome, setSobrenome] = useState("");
     const [data, setData] = useState("");
-    const [sexo, setSexo] = useState("");
     const [cep, setCep] = useState("");
     const [rua, setRua] = useState("");
     const [bairro, setBairro] = useState("");
@@ -32,10 +32,10 @@ export default function SignUp({navigation}) {
                     <Image source={logo}/>
                 </SafeAreaView>
 
-                <Input label="Nome" value={nome} onChangeText={(text) => { setNome(text) }} placeholder="Nome" />
+                <Input label="Nome" value={nome} onChangeText={(text) => { setNome(RemoveInappropriate(text)) }} placeholder="Nome" />
                 <Input label="Sobrenome" value={sobrenome} onChangeText={(text) => { setSobrenome(text) }} placeholder="Sobrenome" />
                 <InputMask type={'datetime'} options={{format: 'DD/MM/YYYY'}} label="Data de nascimento" value={data} onChangeText={(text) => { setData(text) }} placeholder="DD/MM/YYYY" />
-                <Select label="Genero" selectedValue={sexo} onValueChange={(value) => {setSexo(value)}} itensSelect={[{'Masculino': 'M'}, {'Feminino': 'F'}]} />
+                
                 <InputMask type={'zip-code'} label="CEP" value={cep} onChangeText={(text) => {
                     setCep(text);
                     if(text.length == 9) {
@@ -53,20 +53,22 @@ export default function SignUp({navigation}) {
                 <Input label="Bairro" value={bairro} onChangeText={(text) => { setBairro(text) }} placeholder="Bairro" />
                 <Input label="Cidade" value={cidade} onChangeText={(text) => { setCidade(text) }} placeholder="Cidade" />
                 <Input label="Estado" value={UF} onChangeText={(text) => { setUF(text) }} placeholder="Estado" />
-                <Input label="Login" value={login} onChangeText={(text) => { setLogin(text) }} placeholder="Login" />
+                <Input label="Login" autoCapitalize={'none'} value={login} onChangeText={(text) => { setLogin(RemoveInappropriate(text)) }} placeholder="Login" />
                 <Input label="Senha" value={senha} onChangeText={(text) => { setSenha(text) }} placeholder="Senha" protected/>
 
                 <TouchableOpacity style={estilo.button} onPress={() => {
-                    if(nome == '' || sobrenome == '' || data == '' || sexo == '' || cep == '' || rua == '' || bairro == '' || cidade == '' || UF == '' || login == '' || senha == '') {
+                    if(nome == '' || sobrenome == '' || data == '' || cep == '' || rua == '' || bairro == '' || cidade == '' || UF == '' || login == '' || senha == '') {
                         return showAlert("Preenchimento obrigatório", "Você precisa preencher todos os campos");
                     }
                     
-                    const sucess = SubscriptionNewUser(nome, sobrenome, sexo, data, cep, rua, bairro, cidade, UF, login, senha);
+                    const sucess = SubscriptionNewUser(nome, sobrenome, data, cep, rua, bairro, cidade, UF, login, senha);
                     
                     sucess.then((value) => {
                         if(value.sucess) {
                             console.log("Conta criada com sucesso");
-                            navigation.navigate('login');
+                            navigation.navigate('login', {
+                                user_name: login
+                            });
 
                             showAlert("Sucesso!", "A sua conta foi criada com sucesso!");
                         }

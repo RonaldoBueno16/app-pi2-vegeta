@@ -2,12 +2,19 @@ import React, {useState} from "react";
 import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text } from "react-native";
 
 import Input from "../../components/Input";
+import { RemoveInappropriate } from "../funcs/filecorrector";
 
 import logo from '../../images/logo.png'
 
-export default function SignIn({navigation}) {    
-    const [nome, setName]= useState("");
+export default function SignIn({route, navigation}) {    
+    let [nome, setName]= useState("");
     const [password, setPassword]= useState("");
+
+    if(route.params != undefined) {
+        const { user_name } = route.params;
+        nome = user_name;
+        route.params = undefined;
+    }
 
     return (
         <SafeAreaView style={estilo.container}>
@@ -15,7 +22,7 @@ export default function SignIn({navigation}) {
                 <Image source={logo}/>
             </SafeAreaView>
 
-            <Input label="Usuário" value={nome} onChangeText={(text) => { setName(text) }} placeholder="Digite o seu usuário" />
+            <Input label="Usuário" autoCorrect={false} autoCapitalize={'none'} value={nome} onChangeText={(text) => { setName(RemoveInappropriate(text)) }} placeholder="Digite o seu usuário" />
             <Input label="Senha" value={password} onChangeText={(text) => { setPassword(text) }} placeholder="Digite a sua senha" protected />
             
             <TouchableOpacity style={estilo.button} onPress={() => {}}>

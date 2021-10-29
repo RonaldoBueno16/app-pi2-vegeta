@@ -7,6 +7,7 @@ export default function Select(prop) {
             <Text style={estilo.label}>{prop.label}</Text>
             <View style={estilo.picker}>
                 <Picker
+                    key={prop.label}
                     selectedValue={prop.selectedValue}
                     onValueChange={prop.onValueChange}>
                     {pickItens(prop.itensSelect)}    

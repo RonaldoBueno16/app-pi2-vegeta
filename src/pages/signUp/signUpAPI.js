@@ -1,13 +1,12 @@
 import api from '../../services/api';
 
-export async function SubscriptionNewUser(nome, sobrenome, sexo, data_nasc, cep, rua, bairro, cidade, uf, login, senha) {
+export async function SubscriptionNewUser(nome, sobrenome, data_nasc, cep, rua, bairro, cidade, uf, login, senha) {
     var sucess;
     
     var data = await api.post('/user/subscription', {
         event: "subscription",
         nome: nome,
         sobrenome: sobrenome,
-        sexo: sexo,
         data_nasc: data_nasc,
         cep: parseInt(cep),
         bairro: bairro,
