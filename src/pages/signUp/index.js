@@ -1,9 +1,11 @@
 import React, {useState} from "react";
 import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text, ScrollView, Dimensions, Alert } from "react-native";
+import Spinner from 'react-native-loading-spinner-overlay';
 
 import showAlert from "../../components/Alert";
 import Input from "../../components/Input";
 import InputMask from "../../components/InputMask";
+
 
 import { SubscriptionNewUser } from "./signUpAPI";
 import { RemoveInappropriate } from "../funcs/filecorrector";
@@ -13,7 +15,6 @@ import logo from '../../images/logo.png'
 import GetCep from '../../services/cep';
 
 export default function SignUp({navigation}) {
-    
     const [nome, setNome] = useState("");
     const [sobrenome, setSobrenome] = useState("");
     const [data, setData] = useState("");
@@ -24,6 +25,14 @@ export default function SignUp({navigation}) {
     const [UF, setUF] = useState("");
     const [login, setLogin] = useState("");
     const [senha, setSenha] = useState("");
+
+    const [loading, setLoading] = useState(false);
+    const startLoading = () => {
+        setLoading(true);
+    };
+    const endLoading = () => {
+        setLoading(false);
+    }
     
     return (
         <ScrollView>
@@ -31,6 +40,12 @@ export default function SignUp({navigation}) {
                 <SafeAreaView>
                     <Image source={logo}/>
                 </SafeAreaView>
+
+                <Spinner
+                    visible={loading}
+                    textContent={'Aguarde...'}
+                    textStyle={estilo.spinnerTextStyle}
+                />
 
                 <Input label="Nome" value={nome} onChangeText={(text) => { setNome(RemoveInappropriate(text)) }} placeholder="Nome" />
                 <Input label="Sobrenome" value={sobrenome} onChangeText={(text) => { setSobrenome(text) }} placeholder="Sobrenome" />
@@ -41,7 +56,6 @@ export default function SignUp({navigation}) {
                     if(text.length == 9) {
                         const addres = GetCep(text);
                         addres.then((teste) => {
-                            console.log(teste);
                             setBairro(teste.bairro);
                             setCidade(teste.localidade);
                             setUF(teste.uf);
@@ -60,12 +74,12 @@ export default function SignUp({navigation}) {
                     if(nome == '' || sobrenome == '' || data == '' || cep == '' || rua == '' || bairro == '' || cidade == '' || UF == '' || login == '' || senha == '') {
                         return showAlert("Preenchimento obrigatório", "Você precisa preencher todos os campos");
                     }
-                    
+                    startLoading();
+
                     const sucess = SubscriptionNewUser(nome, sobrenome, data, cep, rua, bairro, cidade, UF, login, senha);
                     
                     sucess.then((value) => {
                         if(value.sucess) {
-                            console.log("Conta criada com sucesso");
                             navigation.navigate('login', {
                                 user_name: login
                             });
@@ -73,6 +87,7 @@ export default function SignUp({navigation}) {
                             showAlert("Sucesso!", "A sua conta foi criada com sucesso!");
                         }
                         else {
+                            endLoading();
                             showAlert("Não foi possível criar a conta", value.message);
                         }
                     })
@@ -119,5 +134,17 @@ const estilo = StyleSheet.create({
         backgroundColor: "#F5DEB3",
         paddingHorizontal: 20,
         borderRadius: 5
-    }
+    },
+    spinnerTextStyle: {
+        position: "absolute",
+        zIndex: 1,
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#F5FCFF88",
+    },
+    
 });
