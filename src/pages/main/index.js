@@ -1,56 +1,63 @@
 import React from "react";
-import { Text, SafeAreaView, StyleSheet, StatusBar, Image, Dimensions } from "react-native";
+import { Image } from "react-native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import logo from '../../images/logo.png'
+
+//import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Ionicons } from '@expo/vector-icons';
+
+const Tab = createBottomTabNavigator();
+
+import home from './home/home';
+import relatorio from './relatorio';
 
 export default function Main({route, navigation}) {
-    console.log(route.params);
+    const auth_params = {
+        user_id: route.params.user_id,
+        location: route.params.location.coords
+    }
     
     return (
-        <SafeAreaView style={estilo.container}>
-            <StatusBar backgroundColor="#FF0000" />
+        <Tab.Navigator
+            initialRouteName="home"
             
-            <SafeAreaView style={estilo.navbar}>
-                <SafeAreaView style={estilo.area_image}>
-                    <Image source={logo} style={{width: 126/2, height: 79/2,}}/>
-                </SafeAreaView>
-                
-                <SafeAreaView style={estilo.areaTitle}>
-                    <Text style={estilo.title}>Vegeta</Text>
-                </SafeAreaView>
-            </SafeAreaView>
-        </SafeAreaView>
+            screenOptions={{
+                tabBarActiveTintColor: "#1E90FF",
+                tabBarLabelStyle: {
+                    fontSize: 16,
+                    marginBottom: 3
+                },
+                tabBarStyle: {
+                    position: 'absolute',
+                    height: 55
+                }
+
+            }}
+        >
+            <Tab.Screen 
+                name="home"
+                component={home} 
+                options={{
+                    headerShown: false,
+                    tabBarLabel: "Início",
+                    tabBarIcon: ({focused, color, size}) => {
+                        return <Ionicons name="home" size={size} color={color} />
+                    }
+                }}
+                initialParams={auth_params}
+            />
+            <Tab.Screen 
+                name="relatorio"
+                component={relatorio} 
+                options={{
+                    headerShown: false,
+                    tabBarLabel: "Notificações",
+                    tabBarIcon: ({focused, color, size}) => {
+                        return <Ionicons name="notifications" size={24} color={color} />
+                    }
+                }}
+                initialParams={auth_params}
+            />
+        </Tab.Navigator>
     );
 }
-
-const windowWidth = Dimensions.get('window').width;
-const windowHeight = Dimensions.get('window').height;
-
-console.log(windowWidth);
-
-const estilo = StyleSheet.create({
-    container: {
-        flex: 1,
-        width: windowWidth,
-        height: windowHeight
-    },
-    navbar: {
-        flexDirection: "row",
-        height: 60,
-        padding: 5,
-        borderBottomWidth: 1
-    },
-    areaTitle: {
-        marginLeft: 20,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    area_image: {
-        marginLeft: 10,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    title: {
-        fontSize: 26
-    }
-});

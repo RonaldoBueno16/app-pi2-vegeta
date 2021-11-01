@@ -5,7 +5,6 @@ import signIn from './pages/signIn';
 import signUp from './pages/signUp';
 import main from './pages/main';
 
-
 const Stack = createNativeStackNavigator();
 
 export default function MyStack() {

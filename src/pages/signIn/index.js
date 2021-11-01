@@ -8,6 +8,7 @@ import showAlert from "../../components/Alert";
 import Input from "../../components/Input";
 import { RemoveInappropriate } from "../funcs/filecorrector";
 import { AuthUser } from "./signInAPI";
+import getLocation from '../../services/getLocation';
 
 import logo from '../../images/logo.png'
 
@@ -15,8 +16,8 @@ export default function SignIn({route, navigation}) {
     let [nome, setName]= useState("");
     const [password, setPassword]= useState("");
     const [loading, setLoading] = useState(false);
-    const [userId, setId] = useState(-1);
     const [didMount, setDidMount] = useState(false); 
+    const location = getLocation();
 
     useEffect(() => {
         setDidMount(true);
@@ -34,13 +35,13 @@ export default function SignIn({route, navigation}) {
         setLoading(false);
     }
 
-    console.log("Id do usuário: ", userId);
-
     if(route.params != undefined) {
         const { user_name } = route.params;
         route.params = undefined;
         setName(user_name);
     }
+
+    
     
     return (
         <SafeAreaView style={estilo.container}>
@@ -68,16 +69,19 @@ export default function SignIn({route, navigation}) {
                     if(data.data != undefined) {
                         if(data.data.length == 1) {
                             if(data.data[0].user_id) {
-                                showAlert("Conectou", "Conta autenticada com sucesso!" + data.data[0].user_ids);
-                                setId(data.data[0].user_id);
 
+                                
+                                
                                 navigation.dispatch(
                                     CommonActions.reset({
                                         index: 0,
                                         routes: [
                                             {
                                                 name: 'main',
-                                                params: { user_id: userId }
+                                                params: { 
+                                                    user_id: data.data[0].user_id,
+                                                    location: location
+                                                }
                                             }
                                         ]
                                     })
@@ -119,7 +123,8 @@ const estilo = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        backgroundColor: '#e3e2dc'
     },
     button: {
         backgroundColor: "#F5DEB3",
