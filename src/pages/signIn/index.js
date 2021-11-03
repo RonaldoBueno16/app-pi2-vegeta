@@ -1,14 +1,17 @@
 import React, {useState, useEffect} from "react";
 import { CommonActions } from "@react-navigation/native";
-import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text, Alert, AsyncStorage } from "react-native";
+import { SafeAreaView, StyleSheet, Image, Button, TouchableOpacity, Text, Alert,Dimensions } from "react-native";
 import Spinner from 'react-native-loading-spinner-overlay';
 
+import { CheckBox } from "react-native-elements";
 
 import showAlert from "../../components/Alert";
 import Input from "../../components/Input";
 import { RemoveInappropriate } from "../funcs/filecorrector";
 import { AuthUser } from "./signInAPI";
 import getLocation from '../../services/getLocation';
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import logo from '../../images/logo.png'
 
@@ -19,12 +22,34 @@ export default function SignIn({route, navigation}) {
     const [didMount, setDidMount] = useState(false); 
     const location = getLocation();
 
+    const [isSelected, setSelection] = useState(false);
+
     useEffect(() => {
+        AddStorageData();
         setDidMount(true);
-        return () => setDidMount(false);
+        return () => {
+            setDidMount(false)
+        };
     }, [])
 
+    async function AddStorageData() {
+        if(!didMount) {
+            const saveCredentials = await AsyncStorage.getItem('@save_credentials');
+            if(saveCredentials != null) {
+                setSelection(saveCredentials);
+                const storageNickName = await AsyncStorage.getItem('@last_username');
+                const storagePassword = await AsyncStorage.getItem('@last_password');
+        
+                if(storageNickName != null) {
+                    setName(storageNickName);
+                    setPassword(storagePassword);
+                }
+            }
+        }
+    }
+
     if(!didMount) {
+        
         return null;
     }
     
@@ -40,8 +65,6 @@ export default function SignIn({route, navigation}) {
         route.params = undefined;
         setName(user_name);
     }
-
-    
     
     return (
         <SafeAreaView style={estilo.container}>
@@ -56,12 +79,36 @@ export default function SignIn({route, navigation}) {
 
             <Input label="Usuário" autoCorrect={false} autoCapitalize={'none'} value={nome} onChangeText={(text) => { setName(RemoveInappropriate(text)) }} placeholder="Digite o seu usuário" />
             <Input label="Senha" value={password} onChangeText={(text) => { setPassword(text) }} placeholder="Digite a sua senha" protected />
+            <CheckBox 
+                title="Salvar as credenciais"
+                checkedIcon="check-square"
+                uncheckedIcon="minus-square"
+                checkedColor="green"
+                uncheckedColor="red"
+                checked={isSelected}
+                onPress={() => {
+                    setSelection(!isSelected);
+                    AsyncStorage.setItem('@save_credentials', isSelected.toString());
+                }}
+                containerStyle={{
+                    borderWidth: 0,
+                    backgroundColor: null,
+                    width: Dimensions.get('window').width*0.8,
+                    alignItems: 'flex-end'
+                }}
+                textStyle={{
+                    fontFamily: 'Rajdhani-Regular',
+                    fontWeight: '100'
+                }}
+                iconRight
+            />
             
             <TouchableOpacity style={estilo.button} onPress={() => {
                 if(nome == '' || password == '') {
                     return showAlert("Preenchimento obrigatório", "Você precisa preencher todos os campos");
                 }
 
+                
                 startLoading();
 
                 const login = AuthUser(nome, password);
@@ -69,8 +116,8 @@ export default function SignIn({route, navigation}) {
                     if(data.data != undefined) {
                         if(data.data.length == 1) {
                             if(data.data[0].user_id) {
-
-                                
+                                AsyncStorage.setItem('@last_username', nome);
+                                AsyncStorage.setItem('@last_password', password);
                                 
                                 navigation.dispatch(
                                     CommonActions.reset({
@@ -79,7 +126,15 @@ export default function SignIn({route, navigation}) {
                                             {
                                                 name: 'main',
                                                 params: { 
+                                                    nome: `${data.data[0].user_name} ${data.data[0].user_sobrenome}`,
+                                                    nascimento: data.data[0].user_nascimento,
                                                     user_id: data.data[0].user_id,
+                                                    address: {
+                                                        bairro: data.data[0].user_bairro,
+                                                        cep: data.data[0].user_cep,
+                                                        cidade: data.data[0].user_cidade,
+                                                        uf: data.data[0].user_uf
+                                                    },
                                                     location: location
                                                 }
                                             }
@@ -130,7 +185,7 @@ const estilo = StyleSheet.create({
         backgroundColor: "#F5DEB3",
         paddingHorizontal: 100,
         paddingVertical: 10,
-        marginTop: 30,
+        marginTop: 10,
         borderRadius: 5
     },
     labelbutton: {

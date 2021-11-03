@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Text, SafeAreaView, View, StyleSheet, StatusBar, Image, Dimensions, TouchableOpacity, Modal, Alert, ScrollView } from "react-native";
+import { Text, SafeAreaView, View, StyleSheet, StatusBar, Image, Dimensions, TouchableOpacity, ScrollView } from "react-native";
 import {Picker} from '@react-native-picker/picker';
-import { TextInput } from "react-native-gesture-handler";
-import * as Location from 'expo-location';
 import Spinner from 'react-native-loading-spinner-overlay';
 
+
+
 //Icones
-import { Ionicons } from '@expo/vector-icons';
-import { Entypo } from '@expo/vector-icons'; 
 import parcialmente_nublado from '../../../images/lista_esps/parcialmente_nublado.png'
 //---
 
-import logo from '../../../images/logo.png';
+//NavBar
+import NavBar from "../../../components/NavBarTop";
+//---
+
 import montanha from '../../../images/montanha.png';
-import showAlert from "../../../components/Alert";
 
 import Mapa from '../../../components/Mapa';
 
-import { BindESP, LoadUserEsp, LoadRegESP } from "./homeAPI";
+import { LoadUserEsp, LoadRegESP } from "./homeAPI";
+import VincularESP from "../../../components/VincularESP";
 
 export default function Home({route, navigation}) {    
     const state = {
@@ -26,10 +27,7 @@ export default function Home({route, navigation}) {
     }
     
     const [InputVincular, setInputVincular] = useState(false);
-    const [ESP_KEY, setESP_KEY] = useState("");
     const [Containerbind, showBind] = useState(false);
-    const [bindLatitude, setBindLatitude] = useState(state.location.latitude);
-    const [bindLongitude, setBindLongitude] = useState(state.location.longitude);
     const [pageLoaded, setLoaded] = useState(false);
     const [userESPs, setESP] = useState([]);
     const [espSelected, setEspSelect] = useState(-1);
@@ -40,6 +38,8 @@ export default function Home({route, navigation}) {
     const [arrayEspData, setarrayEspData] = useState([]);
     const [coordsESPSelect, setcoordsESPSelect] = useState({latitude: null, longitude: null});
     //----
+
+    
     
     const startLoading = () => {
         setLoading(true);
@@ -47,10 +47,15 @@ export default function Home({route, navigation}) {
     const endLoading = () => {
         setLoading(false);
     }
-
+      
     useEffect(() => {
         if(!pageLoaded) {
             reloadesp(state.user_id);
+        }
+        else {
+            if(!InESPData) {
+                reloadesp();
+            }
         }
     }, [])
 
@@ -94,7 +99,7 @@ export default function Home({route, navigation}) {
         
         endLoading();
     }
-    
+
     return (
         <SafeAreaView style={estilo.container}>
             <Spinner
@@ -103,113 +108,30 @@ export default function Home({route, navigation}) {
             />
             
             <StatusBar backgroundColor="#cdd8d9" />
-            
-            <SafeAreaView style={estilo.navbar}>
-                <SafeAreaView style={estilo.area_image}>
-                    <Image source={logo} style={{width: 126/2, height: 79/2,}}/>
-                </SafeAreaView>
-                
-                <SafeAreaView style={estilo.areaTitle}>
-                    <Text style={estilo.title}>Vegeta</Text>
-                </SafeAreaView>
-            </SafeAreaView>
+            <NavBar />
 
 
-            <Modal
-                animationType="slide"
-                transparent={true}
+            <VincularESP 
                 visible={InputVincular}
-                onRequestClose={() => {
+                user_id={state.user_id}
+                location={{
+                    latitude: state.location.latitude,
+                    longitude: state.location.longitude
+                }}
+                onCloseModal={() => {
                     setInputVincular(false);
-                }}>
-                <SafeAreaView style={estilo.modalcss}>
-                    <SafeAreaView style={estilo.boxmodal}>
-                        <SafeAreaView style={{flexDirection:'row', backgroundColor: "#B2B2B2", borderTopStartRadius: 5, borderTopEndRadius: 5}}>
-                            <Text style={{textAlign: 'left', padding: 6}}>
-                                Cadastro de equipamentos
-                            </Text>
-                            <SafeAreaView style={{
-                                flex: 1,
-                                alignItems: 'flex-end',
-                            }}>
-                                <TouchableOpacity onPress={() => {
-                                    setInputVincular(false);
-                                }}>
-                                    <Ionicons name="close-circle" size={30} color="#B22222" />
-                                </TouchableOpacity>
-                            </SafeAreaView>
-                        </SafeAreaView>
-                        <SafeAreaView>
-                            <TextInput 
-                                placeholder="Chave do ESP"
-                                value={ESP_KEY}
-                                onChangeText={(value) => {setESP_KEY(value)}}
-                                style={{
-                                    padding: 6,
-                                    fontFamily: 'Rajdhani-Regular',
-                                    textAlign: 'center',
-                                    fontSize: 16
-                                }}
-                            />
-                            
-                            <SafeAreaView>
-                                <Text style={{fontFamily: 'Rajdhani-Regular', fontSize: 18, textAlign: 'center', paddingVertical: 4, borderRadius: 5, backgroundColor: "#00000022"}}>Localização do ESP:</Text>
-                                <Mapa 
-                                latitude={bindLatitude}
-                                longitude={bindLongitude} 
-                                draggable={true}
-                                onDragEnd={(event) => {
-                                    setBindLatitude(event.nativeEvent.coordinate.latitude);
-                                    setBindLongitude(event.nativeEvent.coordinate.longitude);
-                                }}
-                                />
-                            </SafeAreaView>
-                            <TouchableOpacity style={{
-                                alignItems: 'center',
-                            }}
-                            onPress={async () => {
-                                if(ESP_KEY == '') {
-                                    return showAlert("Erro ao vincular ESP", "Você precisa digitar uma KEY valida");
-                                }
-                                else {
-                                    startLoading();
-                                    const bind = await BindESP(state.user_id, ESP_KEY, bindLatitude, bindLongitude);
+                }}
+                inicioLoading={() => {
+                    startLoading();
+                }}
+                fimLoading={() => {
+                    endLoading();
+                }}
+                onUpdateESP={async (user_id) => {
+                    reloadesp(state.user_id);
+                }}
+            />
 
-                                    if(!bind.sucess) {
-                                        if(bind.type == "esp_invalid") {
-                                            showAlert("KEY inválida", "Você digitou uma KEY inválida!");
-                                        }
-                                        else if(bind.type == "esp_owner") {
-                                            showAlert("Falha ao vincular", bind.message);
-                                        }
-                                    }
-                                    else {
-                                        await reloadesp(state.user_id);
-                                        setInputVincular(false);
-                                    }
-                                    endLoading();
-                                }
-                            }}
-                            >
-                                <Text style={{
-                                    padding: 5,
-                                    backgroundColor: "#cdd8d9",
-                                    borderRadius: 5,
-                                    marginTop: 5,
-                                    marginBottom: 5,
-                                    fontFamily: 'Rajdhani-Regular',
-                                    fontSize: 18,
-                                    textAlign: 'center',
-                                    paddingHorizontal: windowWidth*0.10
-                                }}>Vincular</Text>
-                            </TouchableOpacity>
-                        </SafeAreaView>
-                        
-                    </SafeAreaView>
-                </SafeAreaView>
-            </Modal>
-
-            
             {(pageLoaded && Containerbind) && <ScrollView>
                 <SafeAreaView style={estilo.boxfundoWelcome}>
                     <SafeAreaView style={estilo.boxdentro}>
@@ -222,9 +144,6 @@ export default function Home({route, navigation}) {
                         <Image source={montanha} />
                         <Text style={{marginTop: 20, textAlign: 'center', fontSize: 14, fontFamily: 'Rajdhani-Regular'}}>Você ainda não tem nenhum dispositivo vinculado.</Text>
                         <TouchableOpacity style={estilo.buttonVincular} onPress={() => {
-                            setESP_KEY("");
-                            setBindLongitude(state.location.longitude);
-                            setBindLatitude(state.location.latitude);
                             setInputVincular(true);
                         }}>
                             <Text style={estilo.vincularLabel}>Vincular</Text>
@@ -262,7 +181,6 @@ export default function Home({route, navigation}) {
                                     <Text style={estilo.infomapinto_text}>Localização do dispositivo</Text>
                                     
                                     <Mapa 
-                                    
                                             latitude={coordsESPSelect.latitude}
                                             longitude={coordsESPSelect.longitude} 
                                             height={250}
@@ -275,7 +193,6 @@ export default function Home({route, navigation}) {
                         {InESPData && <>
                             <View style={estilo.fundoregistros}>
                                 <View style={estilo.listaregistros}>
-
                                     {
                                         arrayEspData.map((data) => {
                                             return <View style={{
@@ -284,7 +201,9 @@ export default function Home({route, navigation}) {
                                                 borderRadius: 10,
                                                 flex: 1,
                                                 flexDirection: 'row'
-                                            }}>
+                                            }}
+                                                key={data.data_registro}
+                                                >
                                                 <View style={{
                                                     flex: 1,
                                                     paddingTop: 5,
@@ -328,6 +247,54 @@ export default function Home({route, navigation}) {
             }            
         </SafeAreaView>
     );
+}
+
+//Retorna o estado do dia de acordo com os dados enviados pelos sensores (ESP)
+function GetStatusSensor(umidade, temperatura, lumens, pressao, altitude, chuva) {
+    let tipoluz;
+    /*
+    Dados lumens:
+        - 0.0001 - Noite sem lua, céu coberto (luz estelar)
+        - 0.002 - Noite sem lua, céu descoberto com luminescencia atmosferica
+        - 0.05 - 0.03 - Lua cheia em céu coberto
+        - 3.4 - Límite escurot do crepúsculi cívil com céu coberto
+        - 20~50 - Áreas publicas rodeadas por áreas escuras
+        - 50 - Sala de estar familia
+        - 80 - Iluminação de áreas de circulação de edificio de escritórios/WC
+        - 100 - Dia escuro com céu completamente nublado
+        - 150 - Train station plataforms
+        - 320~500 - Iluminação de escritório
+        - 400 - Nascer do por do sol, ou por-do-sol num dia claro
+        - 1000 - Dia com céu encoberto
+        - 10~25 - Luz do dia em dia ensolarado (sem luz solar direta)
+        - 32~100 - Luz solar direta
+
+    Valores de tipoluz:
+        0 - Pouca luz
+        1 - Luz artificial
+        2 - Luz solar
+    */
+    
+    if(lumens == 0.0001 || lumens == 0.002 || lumens == 3.4 || (lumens >= 20 || luz <= 50) || (lumens >= 0.03 && lumens <= 0.05) || lumens == 100 || lumens == 1000) {
+        tipoluz = 0;
+    }
+    else if((lumens >= 32 && lumens <= 100)) {
+        tipoluz = 2;
+    }
+    else {
+        tipoluz = 1;
+    }
+
+    let tipochuva;
+    /* Chuva
+        < 1000 - Chuva intensa
+        >= 1000 - Chuvisco
+        > 4000 - Sem chuva
+    */
+}
+
+function map(x, in_min, in_max, out_min, out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 const windowWidth = Dimensions.get('window').width;
@@ -415,7 +382,7 @@ const estilo = StyleSheet.create({
         backgroundColor: "#cdd8d9",
         flex: 1,
         width: windowWidth,
-        height: windowHeight
+        marginBottom: 55
     },
     textbind: {
         fontSize: 16,
@@ -430,17 +397,15 @@ const estilo = StyleSheet.create({
         left: 10,
         borderRadius: 5,
         borderBottomWidth: 1,
-        borderBottomColor: '#9ea6a1ff',
-        width: "95%"
+        borderBottomColor: '#9ea6a1',
+        width: "95%",
     },
     area_image: {
         marginLeft: 10,
-        alignItems: 'center',
         justifyContent: 'center'
     },
     areaTitle: {
         marginLeft: 20,
-        alignItems: 'center',
         justifyContent: 'center'
     },
     title: {
