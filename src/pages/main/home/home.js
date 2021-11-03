@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, {Component, useState, useEffect } from "react";
 import { Text, SafeAreaView, View, StyleSheet, StatusBar, Image, Dimensions, TouchableOpacity, ScrollView } from "react-native";
 import {Picker} from '@react-native-picker/picker';
 import Spinner from 'react-native-loading-spinner-overlay';
-
-
 
 //Icones
 import parcialmente_nublado from '../../../images/lista_esps/parcialmente_nublado.png'
@@ -20,233 +18,243 @@ import Mapa from '../../../components/Mapa';
 import { LoadUserEsp, LoadRegESP } from "./homeAPI";
 import VincularESP from "../../../components/VincularESP";
 
-export default function Home({route, navigation}) {    
-    const state = {
-        user_id: route.params.user_id,
-        location: route.params.location
-    }
-    
-    const [InputVincular, setInputVincular] = useState(false);
-    const [Containerbind, showBind] = useState(false);
-    const [pageLoaded, setLoaded] = useState(false);
-    const [userESPs, setESP] = useState([]);
-    const [espSelected, setEspSelect] = useState(-1);
-    const [loading, setLoading] = useState(false);
+export default class Home extends Component {
+    constructor(props) {
+        super(props);
 
-    //Vars do ESP selecionado pelo usuário
-    const [InESPData, setInESPData] = useState(false);
-    const [arrayEspData, setarrayEspData] = useState([]);
-    const [coordsESPSelect, setcoordsESPSelect] = useState({latitude: null, longitude: null});
-    //----
+        const params = props.route.params;
+        
+        this.state = {
+            user_id: params.user_id,
+            location: params.location,
 
-    
-    
-    const startLoading = () => {
-        setLoading(true);
-    };
-    const endLoading = () => {
-        setLoading(false);
-    }
-      
-    useEffect(() => {
-        if(!pageLoaded) {
-            reloadesp(state.user_id);
-        }
-        else {
-            if(!InESPData) {
-                reloadesp();
+            //----
+            InputVincular: false,
+            Containerbind: false,
+            pageLoaded: false,
+            userESPs: [],
+            espSelected: -1,
+            loading: false,
+            refresh: false,
+
+            InESPData: false,
+            arrayEspData: [],
+            coordsESPSelect: {
+                latitude: null,
+                longitude: null
             }
         }
-    }, [])
-
-    async function reloadesp(user_id) {
-        startLoading();
-
-        const data = await LoadUserEsp(state.user_id);
-
-        if(data.data.length == 0) {
-            showBind(true);
-        }
-        else {
-            showBind(false);
-            setESP(data.data);
-        }
-        setLoaded(true);
-        
-        endLoading();
     }
 
-    async function loadESPReg(esp_id) { //Lista todos os registros desse ESP (Resposta: [ {data_registro: '01/11/2021', registros: 54}, {data_registro: '02/11/2021', registros: 32} ])
-        startLoading();
+    startLoading = () => {
+        this.setState({loading: true});
+    };
+    endLoading = () => {
+        this.setState({loading: false});
+    }
 
-        const data = await LoadRegESP(state.user_id, esp_id);
+    async componentDidMount() {
+        this.startLoading();
+        await this.reloadesp(this.state.user_id, false);
+        this.endLoading();
+    }
+
+    async componentDidUpdate() {
+        if(!this.state.refresh) {
+            this.state.refresh = true;
+            await this.reloadesp(this.state.user_id, true);
+        }
+        else {
+            this.state.refresh = false;
+        }
+    }
+
+    async reloadesp(user_id, refrash) {
+
+        const data = await LoadUserEsp(this.state.user_id);
+        
+        if(data.data.length == 0) {
+            this.state.Containerbind = true;
+            this.state.userESPs = [];
+            this.state.espSelected = -1;
+        }
+        else {
+            this.state.Containerbind = false;
+            this.state.userESPs = data.data;
+        }
+        this.setState({pageLoaded: true});
+        
+    }
+
+    async loadESPReg(esp_id) { //Lista todos os registros desse ESP (Resposta: [ {data_registro: '01/11/2021', registros: 54}, {data_registro: '02/11/2021', registros: 32} ])
+        this.startLoading();
+
+        const data = await LoadRegESP(this.state.user_id, esp_id);
         const dados = data.data;
 
         if(dados.latitude != null && dados.longitude != null) {
-            setcoordsESPSelect({
+            this.setState({coordsESPSelect: {
                 latitude: dados.latitude,
                 longitude: dados.longitude
-            });
+            }});
         }
         
         if(dados.registros.length) {
-            setInESPData(true);
-            setarrayEspData(dados.registros);
+            this.setState({InESPData: true});
+            this.setState({arrayEspData: dados.registros});
         }
         else {
-            setInESPData(false);
+            this.setState({InESPData: false});
         }
         
-        endLoading();
+        this.endLoading();
     }
 
-    return (
-        <SafeAreaView style={estilo.container}>
-            <Spinner
-                    visible={loading}
-                    textStyle={estilo.spinnerTextStyle}
-            />
-            
-            <StatusBar backgroundColor="#cdd8d9" />
-            <NavBar />
-
-
-            <VincularESP 
-                visible={InputVincular}
-                user_id={state.user_id}
-                location={{
-                    latitude: state.location.latitude,
-                    longitude: state.location.longitude
-                }}
-                onCloseModal={() => {
-                    setInputVincular(false);
-                }}
-                inicioLoading={() => {
-                    startLoading();
-                }}
-                fimLoading={() => {
-                    endLoading();
-                }}
-                onUpdateESP={async (user_id) => {
-                    reloadesp(state.user_id);
-                }}
-            />
-
-            {(pageLoaded && Containerbind) && <ScrollView>
-                <SafeAreaView style={estilo.boxfundoWelcome}>
-                    <SafeAreaView style={estilo.boxdentro}>
-                        <Text style={{textAlign: 'center', fontSize: 20, fontFamily: 'Rajdhani-Regular'}}>Seja Bem Vindo!</Text>
-                        <Text style={{textAlign: 'center', fontFamily: 'Rajdhani-Regular'}}>Ao projeto Vegeta, um app que visa a qualidade da saúde vegetal para um melhor proveito das plantações.</Text>
+    render() {
+        return (
+            <SafeAreaView style={estilo.container}>
+                <Spinner
+                        visible={this.state.loading}
+                        textStyle={estilo.spinnerTextStyle}
+                />
+                <StatusBar backgroundColor="#cdd8d9" />
+                <NavBar />
+    
+                <VincularESP 
+                    visible={this.state.InputVincular}
+                    user_id={this.state.user_id}
+                    location={{
+                        latitude: this.state.location.latitude,
+                        longitude: this.state.location.longitude
+                    }}
+                    onCloseModal={() => {
+                        this.setState({InputVincular: false});
+                    }}
+                    inicioLoading={() => {
+                        this.startLoading();
+                    }}
+                    fimLoading={() => {
+                        this.endLoading();
+                    }}
+                    onUpdateESP={async (user_id) => {
+                        this.reloadesp(this.state.user_id);
+                    }}
+                />
+    
+                {(this.state.pageLoaded && this.state.Containerbind) && <ScrollView>
+                    <SafeAreaView style={estilo.boxfundoWelcome}>
+                        <SafeAreaView style={estilo.boxdentro}>
+                            <Text style={{textAlign: 'center', fontSize: 20, fontFamily: 'Rajdhani-Regular'}}>Seja Bem Vindo!</Text>
+                            <Text style={{textAlign: 'center', fontFamily: 'Rajdhani-Regular'}}>Ao projeto Vegeta, um app que visa a qualidade da saúde vegetal para um melhor proveito das plantações.</Text>
+                        </SafeAreaView>
                     </SafeAreaView>
-                </SafeAreaView>
-                <SafeAreaView style={estilo.boxfundoVincular}>
-                    <SafeAreaView style={estilo.vincularesp}>
-                        <Image source={montanha} />
-                        <Text style={{marginTop: 20, textAlign: 'center', fontSize: 14, fontFamily: 'Rajdhani-Regular'}}>Você ainda não tem nenhum dispositivo vinculado.</Text>
-                        <TouchableOpacity style={estilo.buttonVincular} onPress={() => {
-                            setInputVincular(true);
-                        }}>
-                            <Text style={estilo.vincularLabel}>Vincular</Text>
-                        </TouchableOpacity>
+                    <SafeAreaView style={estilo.boxfundoVincular}>
+                        <SafeAreaView style={estilo.vincularesp}>
+                            <Image source={montanha} />
+                            <Text style={{marginTop: 20, textAlign: 'center', fontSize: 14, fontFamily: 'Rajdhani-Regular'}}>Você ainda não tem nenhum dispositivo vinculado.</Text>
+                            <TouchableOpacity style={estilo.buttonVincular} onPress={() => {
+                                this.setState({InputVincular: true});
+                            }}>
+                                <Text style={estilo.vincularLabel}>Vincular</Text>
+                            </TouchableOpacity>
+                        </SafeAreaView>
                     </SafeAreaView>
-                </SafeAreaView>
-            </ScrollView>}
-            {(pageLoaded && !Containerbind) && <ScrollView>
-                <SafeAreaView style={estilo.containerpicker}>
-                    <Text style={{marginBottom: 5, fontSize: 18, fontFamily:'Rajdhani-Regular'}}>Dispositivo</Text>
-                    <SafeAreaView style={estilo.pickerselect}>
-                        <Picker
-                            selectedValue={espSelected}
-                            onValueChange={async (itemValue, itemIndex) => {
-                                setEspSelect(itemValue);
-                                
-                                await loadESPReg(itemValue);
-                            }}
-                            style={{
-                                color: '#000000',
-                                height: "5%",
-                            }}
-                            fontFamily='Rajdhani-Regular'
-                        >
-                            <Picker.Item label="Selecione o ESP" value={-1} style={{color: "#A3A3A3"}} enabled={false}/>
-                            {userESPs.map((esp) => {return <Picker.Item label={esp.esp_nome} value={esp.esp_index} key={{latitude: esp.esp_latitude, longitude: esp.esp_longitude}}/>})}
-                        </Picker>
-                    </SafeAreaView>
-
-                    {(espSelected != -1) && <SafeAreaView style={estilo.infoesps}>
-                        <Text style={estilo.infoesps_title}>Exibindo informações do dispositivo</Text>
-                        {(coordsESPSelect.latitude != null && coordsESPSelect.longitude != null) && <>
-                            <SafeAreaView style={estilo.infomap}>
-                                <View style={estilo.infomapinto}>
-                                    <Text style={estilo.infomapinto_text}>Localização do dispositivo</Text>
+                </ScrollView>}
+                {(this.state.pageLoaded && !this.state.Containerbind) && <ScrollView>
+                    <SafeAreaView style={estilo.containerpicker}>
+                        <Text style={{marginBottom: 5, fontSize: 18, fontFamily:'Rajdhani-Regular'}}>Dispositivo</Text>
+                        <SafeAreaView style={estilo.pickerselect}>
+                            <Picker
+                                selectedValue={this.state.espSelected}
+                                onValueChange={async (itemValue, itemIndex) => {
+                                    this.setState({espSelected: itemValue});
                                     
-                                    <Mapa 
-                                            latitude={coordsESPSelect.latitude}
-                                            longitude={coordsESPSelect.longitude} 
-                                            height={250}
-                                            width={250}
-                                            />
-                                </View>
-                            </SafeAreaView>
-                        </>}
-                        <Text style={estilo.listaregistroslabel}>{InESPData ? ("Ultimos registros coletados:") : ("Não há nenhum registro para ser exibido")}</Text>
-                        {InESPData && <>
-                            <View style={estilo.fundoregistros}>
-                                <View style={estilo.listaregistros}>
-                                    {
-                                        arrayEspData.map((data) => {
-                                            return <View style={{
-                                                marginVertical: 5,
-                                                backgroundColor: "#FFFFFF66",
-                                                borderRadius: 10,
-                                                flex: 1,
-                                                flexDirection: 'row'
-                                            }}
-                                                key={data.data_registro}
-                                                >
-                                                <View style={{
+                                    await this.loadESPReg(itemValue);
+                                }}
+                                style={{
+                                    color: '#000000',
+                                    height: "5%",
+                                }}
+                                fontFamily='Rajdhani-Regular'
+                            >
+                                <Picker.Item label="Selecione o ESP" value={-1} style={{color: "#A3A3A3"}} enabled={false}/>
+                                {this.state.userESPs.map((esp) => {return <Picker.Item label={esp.esp_nome} value={esp.esp_index} key={{latitude: esp.esp_latitude, longitude: esp.esp_longitude}}/>})}
+                            </Picker>
+                        </SafeAreaView>
+    
+                        {(this.state.espSelected != -1) && <SafeAreaView style={estilo.infoesps}>
+                            <Text style={estilo.infoesps_title}>Exibindo informações do dispositivo</Text>
+                            {(this.state.coordsESPSelect.latitude != null && this.state.coordsESPSelect.longitude != null) && <>
+                                <SafeAreaView style={estilo.infomap}>
+                                    <View style={estilo.infomapinto}>
+                                        <Text style={estilo.infomapinto_text}>Localização do dispositivo</Text>
+                                        
+                                        <Mapa 
+                                                latitude={this.state.coordsESPSelect.latitude}
+                                                longitude={this.state.coordsESPSelect.longitude} 
+                                                height={250}
+                                                width={250}
+                                                />
+                                    </View>
+                                </SafeAreaView>
+                            </>}
+                            <Text style={estilo.listaregistroslabel}>{this.state.InESPData ? ("Ultimos registros coletados:") : ("Não há nenhum registro para ser exibido")}</Text>
+                            {this.state.InESPData && <>
+                                <View style={estilo.fundoregistros}>
+                                    <View style={estilo.listaregistros}>
+                                        {
+                                            this.state.arrayEspData.map((data) => {
+                                                return <View style={{
+                                                    marginVertical: 5,
+                                                    backgroundColor: "#FFFFFF66",
+                                                    borderRadius: 10,
                                                     flex: 1,
-                                                    paddingTop: 5,
-                                                    paddingBottom: 5,
-                                                    paddingHorizontal: 8,
-                                                    alignItems: 'flex-start',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Text style={{fontSize: 12, fontFamily: 'Rajdhani-Regular'}}>{data.data_registro}</Text>
-                                                    <Text style={{fontSize: 16, fontFamily: 'Rajdhani-Regular'}}>Ensolarado</Text>
-                                                </View>
-                                                <View style={{}}>
+                                                    flexDirection: 'row'
+                                                }}
+                                                    key={data.data_registro}
+                                                    >
                                                     <View style={{
+                                                        flex: 1,
                                                         paddingTop: 5,
                                                         paddingBottom: 5,
-                                                        paddingHorizontal: 10,
-                                                        alignItems: 'flex-end',
-                                                        flexDirection: 'row',
+                                                        paddingHorizontal: 8,
+                                                        alignItems: 'flex-start',
                                                         justifyContent: 'center'
                                                     }}>
-                                                        <Text style={{
-                                                            fontSize: 16, fontFamily: 'Rajdhani-Regular',
-                                                            paddingHorizontal: 5
-                                                        }}>{`${Math.round(data.media_temperatura)}ºC`}</Text>
-                                                        <Image source={parcialmente_nublado} />
+                                                        <Text style={{fontSize: 12, fontFamily: 'Rajdhani-Regular'}}>{data.data_registro}</Text>
+                                                        <Text style={{fontSize: 16, fontFamily: 'Rajdhani-Regular'}}>Ensolarado</Text>
+                                                    </View>
+                                                    <View style={{}}>
+                                                        <View style={{
+                                                            paddingTop: 5,
+                                                            paddingBottom: 5,
+                                                            paddingHorizontal: 10,
+                                                            alignItems: 'flex-end',
+                                                            flexDirection: 'row',
+                                                            justifyContent: 'center'
+                                                        }}>
+                                                            <Text style={{
+                                                                fontSize: 16, fontFamily: 'Rajdhani-Regular',
+                                                                paddingHorizontal: 5
+                                                            }}>{`${Math.round(data.media_temperatura)}ºC`}</Text>
+                                                            <Image source={parcialmente_nublado} />
+                                                        </View>
                                                     </View>
                                                 </View>
-                                            </View>
-                                        })
-                                    }
-                                    
+                                            })
+                                        }
+                                    </View>
                                 </View>
-                            </View>
-                        </>}
-                    </SafeAreaView>}
-                </SafeAreaView>
-                <SafeAreaView>
-                    
-                </SafeAreaView>
-                </ScrollView>
-            }            
-        </SafeAreaView>
-    );
+                            </>}
+                        </SafeAreaView>}
+                    </SafeAreaView>
+                    <SafeAreaView>
+                    </SafeAreaView>
+                    </ScrollView>
+                }            
+            </SafeAreaView>
+        );
+    }
 }
 
 //Retorna o estado do dia de acordo com os dados enviados pelos sensores (ESP)

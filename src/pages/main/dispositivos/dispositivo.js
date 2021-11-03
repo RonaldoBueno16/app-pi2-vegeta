@@ -15,7 +15,6 @@ import VincularESP from "../../../components/VincularESP";
 
 //Funcs
 import { LoadUserEsp } from "../home/homeAPI";
-import { Button } from "react-native-elements/dist/buttons/Button";
 //--
 
 export default class Dispositivos extends Component {
@@ -31,17 +30,28 @@ export default class Dispositivos extends Component {
 
             //APP
             arrayDataESP: [],
+            refresh: false,
             loading: false,
             InputVincular: false
         }
     }
 
-    componentDidUpdate() {
-        // this.reloadesp(this.state.user_id);
+    
+
+    async componentDidUpdate() {
+        if(!this.state.refresh) {
+            this.state.refresh = true;
+            await this.reloadesp(this.state.user_id, true);
+        }
+        else {
+            this.state.refresh = false;
+        }
     }
 
-    componentDidMount() {
-        this.reloadesp(this.state.user_id);
+    async componentDidMount() {
+        this.startLoading();
+        await this.reloadesp(this.state.user_id, true);
+        this.endLoading();
     }
 
     ListaESPs() {
@@ -75,7 +85,7 @@ export default class Dispositivos extends Component {
                         paddingHorizontal: 5
                     }}>
                         <TouchableOpacity onPress={() => {
-                            startLoading();
+                            this.startLoading();
                         }}>
                             <Octicons name="diff-removed" size={24} color="#B22222" />
                         </TouchableOpacity>
@@ -88,22 +98,39 @@ export default class Dispositivos extends Component {
     }
 
     //Loading
-    startLoading() {
-        this.setState({loading: true});
+    startLoading(refresh = true) {
+        if(refresh) {
+            this.setState({loading: true});
+        }
+        else {
+            this.state.loading = true;
+        }
     }
-    endLoading() {
-        this.setState({loading: false});
+    endLoading(refresh = true) {
+        if(refresh) {
+            this.setState({loading: false});
+        }
+        else {
+            this.state.loading = false;
+        }
+    }
+    isLoading() {
+        return this.state.loading;
     }
     //--
 
-    async reloadesp(user_id) {
-        console.log("Buscando ESps");
-        this.startLoading();
+    async reloadesp(user_id, refrash) {
+        // this.startLoading();
 
         const data = await LoadUserEsp(this.state.user_id);
-        this.setState({arrayDataESP: data.data});
+        if(refrash) {
+            this.setState({arrayDataESP: data.data});
+        }
+        else {
+            this.state.arrayDataESP = data.data;
+        }
 
-        this.endLoading();
+        // this.endLoading();
     }
     
     render() {
@@ -125,10 +152,10 @@ export default class Dispositivos extends Component {
                     this.setState({InputVincular: false});
                 }}
                 inicioLoading={() => {
-                    startLoading();
+                    this.startLoading();
                 }}
                 fimLoading={() => {
-                    endLoading();
+                    this.endLoading();
                 }}
                 onUpdateESP={async (user_id) => {
                     //reloadesp(user_id);
