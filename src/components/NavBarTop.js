@@ -1,8 +1,7 @@
 import React from "react";
-import { Text, SafeAreaView, View, Image, Dimensions, TouchableOpacity} from "react-native";
+import { Text, SafeAreaView, View, Image, Dimensions, TouchableOpacity, StyleSheet} from "react-native";
 
 import logo from '../images/logo.png';
-import config from '../images/config.png'
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -30,15 +29,7 @@ export default function NavBar(props) {
                                 paddingHorizontal: 10
                             }}>Vegeta</Text>
                         </View>
-                        <View style={{
-                            justifyContent: 'center'
-                        }}>
-                            <TouchableOpacity onPress={() => {
-                                
-                            }}>
-                                <Image source={config} style={{width: 26, height: 26}}/>
-                            </TouchableOpacity>
-                        </View>
+                        
                     </View>
                 </View>
             </SafeAreaView>

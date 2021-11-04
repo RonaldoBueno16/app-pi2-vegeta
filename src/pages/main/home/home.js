@@ -23,6 +23,8 @@ export default class Home extends Component {
         super(props);
 
         const params = props.route.params;
+
+        console.log(params);
         
         this.state = {
             user_id: params.user_id,
@@ -44,6 +46,7 @@ export default class Home extends Component {
                 longitude: null
             }
         }
+
     }
 
     startLoading = () => {

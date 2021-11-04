@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import { SafeAreaView, View, StyleSheet, Dimensions, Text, ScrollView } from "react-native";
+import { SafeAreaView, View, StyleSheet, Dimensions, Text, ScrollView, Alert } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Spinner from 'react-native-loading-spinner-overlay';
 
@@ -10,11 +10,16 @@ import moment from "moment";
 import { Octicons } from '@expo/vector-icons'; 
 //-
 
+//Funções da API
+import {DesvincularESP} from "./dispositivoAPI";
+//--
+
 //Components
 import VincularESP from "../../../components/VincularESP";
 
 //Funcs
 import { LoadUserEsp } from "../home/homeAPI";
+import showAlert from "../../../components/Alert";
 //--
 
 export default class Dispositivos extends Component {
@@ -35,8 +40,6 @@ export default class Dispositivos extends Component {
             InputVincular: false
         }
     }
-
-    
 
     async componentDidUpdate() {
         if(!this.state.refresh) {
@@ -84,8 +87,19 @@ export default class Dispositivos extends Component {
                         justifyContent: 'center',
                         paddingHorizontal: 5
                     }}>
-                        <TouchableOpacity onPress={() => {
+                        <TouchableOpacity onPress={async () => {
                             this.startLoading();
+                            const data = await DesvincularESP(this.state.user_id, esp.esp_index)
+                            if(data.sucess) {
+                                showAlert("Sucesso", data.data.message);
+                            }
+                            else {
+                                showAlert("Erro", data.message);
+                            }
+
+                            this.state.refresh = true;
+                            await this.reloadesp(this.state.user_id, true);
+                            this.endLoading();
                         }}>
                             <Octicons name="diff-removed" size={24} color="#B22222" />
                         </TouchableOpacity>
@@ -204,12 +218,6 @@ export default class Dispositivos extends Component {
                     {this.state.arrayDataESP.length > 0 &&
                         this.ListaESPs()
                     }
-                    
-
-                    
-
-                    
-                    
                 </SafeAreaView>
             </ScrollView>
 

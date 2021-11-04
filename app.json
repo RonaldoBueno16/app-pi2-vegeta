@@ -25,10 +25,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "expo.android.package",
+      "package": "com.pi2ucl.vegeta",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDOrCSFGZ2acJ9G-kEiur4LfBQSzTT_XIQ"

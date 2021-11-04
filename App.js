@@ -5,8 +5,6 @@ import MyStack from './src/routes';
 import AppLoading from 'expo-app-loading';
 import useFonts from './src/hooks/useFonts';
 
-
-
 export default function App() {
     const [fontsLoaded, setFontsLoaded] = useState(false);
 
