@@ -8,8 +8,9 @@ export async function AuthUser(username, password) {
     }).then((data) => {
         response = data.data;
     }).catch((err) => {
-        console.log("Usuário não encontrado. " + err);
+        console.log("Usuaraaio não encontrado. " + err);
 
+        console.log(err);
         response = err.response.data;
         
     })
